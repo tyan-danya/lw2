@@ -1,8 +1,20 @@
-
-// переменная для хранения состояния авторизованного пользователя
-// при успешной авторизации должен содержать объект с пользовательскими данными
-// при signOut должен становиться null
-var authUserData = null; 
+var error = {
+    notValidValue: {
+      errorCode: 1,
+      errorText: "Не верный формат"
+    },
+    oldUser: {
+      errorCode: 2,
+      errorText: "Пользователь с таким Email уже существует"
+    },
+    incorrectPassword: {
+      errorCode: 3,
+      errorText: "Неправильный Email/пароль"
+    }
+  } // переменная для хранения состояния авторизованного пользователя
+  // при успешной авторизации должен содержать объект с пользовательскими данными
+  // при signOut должен становиться null
+var authUserData = null;
 
 var userDatabase = []; // массив с зарегистрированными пользователями
 
@@ -10,10 +22,22 @@ function register(email, password) {
   // ваш код
   // проверка на валидность email, пароля (6 символов, начинается с большой буквы, должен содержать как минимум 1 цифру)
   // проверка нового пользователя в userDatabase
-  userDatabase.push({
-    email:email,
-    password:password
-  }); 
+  if (validator(email).isEmail().validate() && isValidPassword(password)) {
+    for (let i = 0; i < userDatabase.length; i++) {
+      if (userDatabase[i].email === email) {
+        return error.oldUser;
+      }
+    }
+    let newUser = {
+      email: email,
+      password: password
+    };
+    userDatabase.push(newUser);
+    return newUser;
+  } else {
+    return error.notValidValue;
+  }
+
 }
 
 function signIn(email, password) {
@@ -21,29 +45,33 @@ function signIn(email, password) {
   // проверка на валидность email, пароля (6 символов, начинается с большой буквы)
   // проверка наличия пользователя в userDatabase
   // заполнение authUserData
-  userDatabase.forEach(function(item){
-    if (item.email === email){
-      if (item.password === password){
-        authUserData = item;
-        return true;
+  if (validator(email).isEmail().validate() && isValidPassword(password)) {
+    for (let i = 0; i < userDatabase.length; i++) {
+      if (userDatabase[i].email === email) {
+        if (userDatabase[i].password === password) {
+          authUserData = userDatabase[i];
+          return authUserData;
+        }
       }
     }
-  });
-  return false;
+    return error.incorrectPassword;
+  } else {
+    return error.notValidValue;
+  }
+
 }
 
 function signOut() {
   // ваш код
   authUserData = null;
-  return false;
 }
 
 function resetPassword(email, oldPassword, newPassword) {
   // функция восстановления пароля
   // должна изменять пароль пользователя если старый пароль введен верно и новый пароль соответствует правилам формата пароля
-  userDatabase.forEach(function(item){
-    if (item.email === email){
-      if (item.password === oldPassword){
+  userDatabase.forEach(function(item) {
+    if (item.email === email) {
+      if (item.password === oldPassword) {
         item.password = newPassword;
         return true;
       }
@@ -53,80 +81,92 @@ function resetPassword(email, oldPassword, newPassword) {
 
 function isAuth() {
   // функция возвращает true если пользователь авторизован, false если нет
-  if (authUserData !== null){
+  if (authUserData !== null) {
     return true;
   } else {
     return false;
   }
 }
 
+function isValidPassword(value) {
+  if (value.match(/\d/) == null) {
+    return false;
+  }
+  if (value.length < 6) {
+    return false;
+  }
+  if (value.match(/^[A-Z]/) == null) {
+    return false;
+  }
+  return true;
+}
 
 function validator(_value) {
   return {
     value: _value,
     isValid: null,
-    validate: function () {
+    validate: function() {
       return this.isValid;
     },
-    min: function (value) {
+    min: function(value) {
       this.isValid = this.value > value;
       return this;
     },
-    max: function (value) {
+    max: function(value) {
       this.isValid = this.value < value;
       return this;
     },
-    minLength: function (value) {
+    minLength: function(value) {
       this.isValid = this.value.length > value;
       return this;
     },
-    maxLength: function (value) {
+    maxLength: function(value) {
       this.isValid = this.value.length < value;
       return this;
     },
-    equal: function (value) {
+    equal: function(value) {
       this.isValid = this.value.toString() === value.toString();
       return this;
     },
-    isString: function () {
+    isString: function() {
       this.isValid = typeof this.value === "string";
       return this;
     },
-    isArray: function () {
+    isArray: function() {
       this.isValid = Array.isArray(this.value);
       return this;
     },
-    isNumber: function () {
+    isNumber: function() {
       this.isValid = typeof this.value === "number";
       return this;
     },
-    isEmail: function () {
+    isEmail: function() {
       let result = this.value.match(/\w*@\w*\.\w*/);
-      if (result != null){
+      if (result != null) {
         this.isValid = true;
       } else {
         this.isValid = false;
       }
       return this;
     },
-    isFloat: function () {
+    isFloat: function() {
       if (!isNaN(parseFloat(this.value))) {
         let stringNumber = this.value.toString();
         let isFloat = stringNumber.indexOf(".");
-        if (isFloat !== -1){
-            this.isValid = true;
+        if (isFloat !== -1) {
+          this.isValid = true;
         } else {
-            this.isValid = false;
+          this.isValid = false;
         }
       } else {
         this.isValid = false;
-        
+
       }
       return this;
     },
-    isDate: function () {
+    isDate: function() {
       let result = this.value.match(/\d{2}\.\d{2}\.\d{4}/);
-      if (result != null){
+      if (result != null) {
         this.isValid = true;
       } else {
         this.isValid = false;
