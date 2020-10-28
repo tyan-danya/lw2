@@ -22,7 +22,7 @@ function register(email, password) {
   // ваш код
   // проверка на валидность email, пароля (6 символов, начинается с большой буквы, должен содержать как минимум 1 цифру)
   // проверка нового пользователя в userDatabase
-  if (validator(email).isEmail().validate() && isValidPassword(password)) {
+  if (validator(email).isEmail().validate() && validator(password).isPassword().validate()) {
     for (let i = 0; i < userDatabase.length; i++) {
       if (userDatabase[i].email === email) {
         return error.oldUser;
@@ -45,14 +45,10 @@ function signIn(email, password) {
   // проверка на валидность email, пароля (6 символов, начинается с большой буквы)
   // проверка наличия пользователя в userDatabase
   // заполнение authUserData
-  if (validator(email).isEmail().validate() && isValidPassword(password)) {
-    for (let i = 0; i < userDatabase.length; i++) {
-      if (userDatabase[i].email === email) {
-        if (userDatabase[i].password === password) {
-          authUserData = userDatabase[i];
-          return authUserData;
-        }
-      }
+  if (validator(email).isEmail().validate() && validator(password).isPassword().validate()) {
+    let tempUser = userDatabase.find(user => user.email === email && user.password === password);
+    if (tempUser !== undefined) {
+      return tempUser;
     }
     return error.incorrectPassword;
   } else {
@@ -70,11 +66,9 @@ function resetPassword(email, oldPassword, newPassword) {
   // функция восстановления пароля
   // должна изменять пароль пользователя если старый пароль введен верно и новый пароль соответствует правилам формата пароля
   userDatabase.forEach(function(item) {
-    if (item.email === email) {
-      if (item.password === oldPassword) {
-        item.password = newPassword;
-        return true;
-      }
+    if (item.email === email && item.password === oldPassword) {
+      item.password = newPassword;
+      return true;
     }
   });
 }
@@ -88,18 +82,6 @@ function isAuth() {
   }
 }
 
-function isValidPassword(value) {
-  if (value.match(/\d/) == null) {
-    return false;
-  }
-  if (value.length < 6) {
-    return false;
-  }
-  if (value.match(/^[A-Z]/) == null) {
-    return false;
-  }
-  return true;
-}
 
 function validator(_value) {
   return {
@@ -173,5 +155,21 @@ function validator(_value) {
       }
       return this;
     },
+    isPassword: function() {
+      if (this.value.match(/\d/) == null) {
+        this.isValid = false;
+        return this;
+      }
+      if (this.value.length < 6) {
+        this.isValid = false;
+        return this;
+      }
+      if (this.value.match(/^[A-Z]/) == null) {
+        this.isValid = false;
+        return this;
+      }
+      this.isValid = true;
+      return this;
+    }
   };
 }
