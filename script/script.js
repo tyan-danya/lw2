@@ -22,7 +22,7 @@ function register(email, password) {
   // ваш код
   // проверка на валидность email, пароля (6 символов, начинается с большой буквы, должен содержать как минимум 1 цифру)
   // проверка нового пользователя в userDatabase
-  if (validator(email).isEmail().validate() && validator(password).isPassword().validate()) {
+  if (validator(email).isEmail().validate() && isValidPassword(password)) {
     for (let i = 0; i < userDatabase.length; i++) {
       if (userDatabase[i].email === email) {
         return error.oldUser;
@@ -45,7 +45,7 @@ function signIn(email, password) {
   // проверка на валидность email, пароля (6 символов, начинается с большой буквы)
   // проверка наличия пользователя в userDatabase
   // заполнение authUserData
-  if (validator(email).isEmail().validate() && validator(password).isPassword().validate()) {
+  if (validator(email).isEmail().validate() && isValidPassword(password)) {
     let tempUser = userDatabase.find(user => user.email === email && user.password === password);
     if (tempUser !== undefined) {
       return tempUser;
@@ -82,6 +82,18 @@ function isAuth() {
   }
 }
 
+function isValidPassword(value) {
+  if (value.match(/\d/) == null) {
+    return false;
+  }
+  if (!validator(value.length).min(6).validate()) {
+    return false;
+  }
+  if (value.match(/^[A-Z]/) == null) {
+    return false;
+  }
+  return true;
+}
 
 function validator(_value) {
   return {
@@ -95,7 +107,7 @@ function validator(_value) {
       return this;
     },
     max: function(value) {
-      this.isValid = this.value < value;
+      this.isValid = this.value <= value;
       return this;
     },
     minLength: function(value) {
@@ -155,21 +167,5 @@ function validator(_value) {
       }
       return this;
     },
-    isPassword: function() {
-      if (this.value.match(/\d/) == null) {
-        this.isValid = false;
-        return this;
-      }
-      if (this.value.length < 6) {
-        this.isValid = false;
-        return this;
-      }
-      if (this.value.match(/^[A-Z]/) == null) {
-        this.isValid = false;
-        return this;
-      }
-      this.isValid = true;
-      return this;
-    }
   };
 }
